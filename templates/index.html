@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat AI Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emoji-mart/data"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emoji-mart/js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <style>
+        body {
+            background-color: #f3f4f6;
+            font-family: 'Arial', sans-serif;
+            transition: background-color 0.3s;
+            margin: 0;
+            height: 100vh;
+        }
+    
+        .dark-mode {
+            background-color: #1f2937;
+            color: #e5e7eb;
+        }
+    
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #1F2023;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+    
+        .chat-header {
+            padding: 10px;
+            background-color: #3b82f6;
+            color: white;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+    
+        .dark-mode .chat-header {
+            background-color: #1e40af;
+        }
+    
+        .messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+    
+        .message {
+            max-width: 100%;
+            padding: 12px 18px;
+            border-radius: 15px;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards;
+            word-wrap: break-word;
+            line-height: 1.5;
+        }
+    
+        .message ul,
+        .message ol {
+            margin: 5px 0;
+            padding-left: 20px;
+        }
+    
+        .message li {
+            margin: 5px 0;
+        }
+    
+        .message pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.9em;
+        }
+    
+        .message p strong {
+            color: #10b981;
+        }
+    
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    
+        .user-message {
+            background-color: #2E3033;
+            color: #f9f8f6;
+            margin-left: auto;
+            align-self: flex-end;
+        }
+    
+        .bot-message {
+            /* background-color: #10b981; */
+            color: #f9f8f6;
+        }
+    
+        .error-message {
+            background-color: #ef4444;
+            color: white;
+            margin-left: auto;
+        }
+    
+        .typing-indicator {
+            display: none;
+            background-color: #10b981;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 15px;
+            margin: 15px 0;
+        }
+    
+        .typing-indicator.show {
+            display: block;
+        }
+    
+        .typing-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: white;
+            border-radius: 50%;
+            margin: 0 3px;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+    
+        .typing-dot:nth-child(2) {
+            animation-delay: -0.2s;
+        }
+    
+        .typing-dot:nth-child(3) {
+            animation-delay: -0.4s;
+        }
+    
+        @keyframes bounce {
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+            40% {
+                transform: scale(1);
+            }
+        }
+    
+        .input-area {
+            display: flex;
+            gap: 5px;
+            padding: 15px;
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+            align-items: center;
+        }
+    
+        .dark-mode .input-area {
+            background-color: #374151;
+            border-color: #4b5563;
+        }
+    
+        .emoji-picker {
+            position: absolute;
+            bottom: 70px;
+            right: 10px;
+            z-index: 1000;
+        }
+    
+        .sidebar {
+            width: 0;
+            background-color: #374151;
+            transition: width 0.3s;
+            overflow-x: hidden;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            right: 0;
+        }
+    
+        .sidebar.open {
+            width: 250px;
+        }
+    
+        .sidebar button {
+            width: 100%;
+            text-align: left;
+            padding: 12px;
+            color: white;
+            border: none;
+            background: none;
+            cursor: pointer;
+        }
+    
+        .sidebar button:hover {
+            background-color: #4b5563;
+        }
+    
+        .search-history {
+            display: none;
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    
+        .dark-mode .search-history {
+            background: #374151;
+            color: #e5e7eb;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+    <div class="chat-container">
+        <div class="chat-header">Chat AI Assistant</div>
+        <div class="messages" id="messages">
+            <!-- File Reader Link -->
+            <div class="p-4">
+                <a href="/file_reader" class="text-blue-500 hover:underline">Go to File Reader</a>
+            </div>
+        </div>
+        <div class="input-area relative">
+            <input type="text" id="messageInput" placeholder="Type your message..." class="flex-grow p-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none" onfocus="showEmojiPicker()" onblur="hideEmojiPicker()">
+            <button onclick="sendMessage()" class="bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition">Send</button>
+            <button id="emojiButton" class="bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition">😊</button>
+            <button onclick="toggleSidebar()" class="bg-gray-500 text-white p-2 rounded-lg hover:bg-gray-600 transition">⚙️</button>
+            <div id="emojiPicker" class="emoji-picker hidden"></div>
+            <div id="searchHistory" class="search-history"></div>
+        </div>
+        <div class="typing-indicator" id="typingIndicator">
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+            <span class="typing-dot"></span>
+        </div>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <button onclick="setLanguage('hi')">हिंदी</button>
+        <button onclick="setLanguage('en')">English</button>
+        <button onclick="toggleDarkMode()">Toggle Mode</button>
+        <button onclick="clearChat()">Clear Chat</button>
+    </div>
+
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('messageInput');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const sidebar = document.getElementById('sidebar');
+        const searchHistory = document.getElementById('searchHistory');
+        const emojiButton = document.getElementById('emojiButton');
+        const emojiPicker = document.getElementById('emojiPicker');
+        let currentLanguage = 'hi';
+        let searchHistoryList = [];
+        let emojiPickerInstance = null;
+
+        // Show emoji picker
+        function showEmojiPicker() {
+            emojiPicker.classList.remove('hidden');
+            if (emojiPickerInstance) {
+                emojiPickerInstance.updateTheme(document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+            }
+        }
+
+        // Hide emoji picker
+        function hideEmojiPicker() {
+            setTimeout(() => {
+                emojiPicker.classList.add('hidden');
+            }, 200);
+        }
+
+        // Initialize emoji picker
+        async function initEmojiPicker() {
+            try {
+                const data = await (await fetch('https://cdn.jsdelivr.net/npm/@emoji-mart/data')).json();
+                emojiPickerInstance = new EmojiMart.Picker({
+                    data,
+                    onEmojiSelect: (emoji) => {
+                        messageInput.value += emoji.native;
+                        messageInput.focus();
+                        emojiPicker.classList.add('hidden');
+                    },
+                    theme: document.body.classList.contains('dark-mode') ? 'dark' : 'light',
+                    autoFocus: false,
+                    set: 'twitter'
+                });
+                emojiPicker.appendChild(emojiPickerInstance);
+            } catch (error) {
+                console.error('Failed to initialize emoji picker:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initEmojiPicker);
+
+        emojiButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            emojiPicker.classList.toggle('hidden');
+            if (emojiPickerInstance) {
+                emojiPickerInstance.updateTheme(document.body.classList.contains('dark-mode') ? 'dark' : 'light');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!emojiPicker.contains(e.target) && !emojiButton.contains(e.target)) {
+                emojiPicker.classList.add('hidden');
+            }
+        });
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            emojiPicker.classList.add('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && !e.target.matches('button[onclick="toggleSidebar()"]')) {
+                sidebar.classList.remove('open');
+            }
+        });
+
+        function addMessage(message, isUser = false, isError = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : isError ? 'error-message' : 'bot-message'}`;
+            
+            let formattedMessage = message
+                .replace(/&/g, '&')
+                .replace(/</g, '<')
+                .replace(/>/g, '>')
+                .replace(/\n/g, '<br>')
+                .replace(/```(\w+)?\n([\s\S]*?)\n```/g, (match, lang, code) => {
+                    return `<pre><code class="language-${lang || 'plaintext'}">${code.trim()}</code></pre>`;
+                })
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/^\s*[-*]\s+(.+?)(<br>|$)/gm, '<li>$1</li>')
+                .replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>')
+                .replace(/^\s*(\d+)\.\s+(.+?)(<br>|$)/gm, '<li>$2</li>')
+                .replace(/(<li>.*?<\/li>)/gs, '<ol>$1</ol>');
+
+            messageDiv.innerHTML = formattedMessage;
+            hljs.highlightAll(messageDiv);
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            if (!isUser && !isError) {
+                searchHistoryList.unshift(message);
+                updateSearchHistory();
+            }
+        }
+
+        function showTypingIndicator() {
+            typingIndicator.classList.add('show');
+        }
+
+        function hideTypingIndicator() {
+            typingIndicator.classList.remove('show');
+        }
+
+        async function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            messageInput.value = '';
+            showTypingIndicator();
+
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message, language: currentLanguage }),
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                hideTypingIndicator();
+                
+                if (data.response) {
+                    addMessage(data.response);
+                } else if (data.error) {
+                    addMessage(data.error, false, true);
+                }
+            } catch (error) {
+                hideTypingIndicator();
+                if (error.name === 'AbortError') {
+                    addMessage('Request timed out. Please try again.', false, true);
+                } else {
+                    addMessage(`Error: ${error.message}`, false, true);
+                }
+            }
+        }
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            sidebar.classList.remove('open');
+            addMessage(`Language set to ${lang === 'hi' ? 'हिंदी' : 'English'}`, false);
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+            sidebar.classList.remove('open');
+        }
+
+        function clearChat() {
+            messagesDiv.innerHTML = `
+                <div class="p-4">
+                    <a href="/file_reader" class="text-blue-500 hover:underline">Go to File Reader</a>
+                </div>
+            `;
+            searchHistoryList = [];
+            updateSearchHistory();
+            sidebar.classList.remove('open');
+        }
+
+        function toggleSearchHistory() {
+            searchHistory.classList.toggle('hidden');
+            if (!searchHistory.classList.contains('hidden')) {
+                updateSearchHistory();
+            }
+        }
+
+        function updateSearchHistory() {
+            searchHistory.innerHTML = searchHistoryList.map((msg, index) => `<p>${index + 1}. ${msg.split('\n')[0]}</p>`).join('');
+        }
+
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        addMessage("Hello! Ask me anything (e.g., 'सुरत में सबसे अच्छा रेस्तरां बताओ')", false);
+        hljs.initHighlightingOnLoad();
+    </script>
+    <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9396dcedcc6b4578',t:'MTc0NjE4MjAzMy4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+</body>
+</html>

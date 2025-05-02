@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Reader & Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border-color: #e2e8f0;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            overflow: hidden;
+        }
+
+        .section {
+            padding: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section h2 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        input[type="file"],
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        input[type="file"] {
+            background-color: white;
+            cursor: pointer;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .file-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .file-inputs > div {
+            background-color: #f8fafc;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #result {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            white-space: pre-wrap;
+            font-family: 'Inter', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .section {
+                padding: 1.5rem;
+            }
+
+            .file-inputs {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>File Reader & Analyzer</h1>
+            <p>Upload, read, and analyze your files with AI</p>
+        </div>
+
+        <div class="main-content">
+            <div class="section">
+                <h2>Read File</h2>
+                <div class="form-group">
+                    <label for="file">Select File:</label>
+                    <input type="file" id="file" accept=".txt,.csv,.xlsx,.xls,.json">
+                </div>
+                <button onclick="readFile()">
+                    <span>Read File</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="section">
+                <h2>Analyze File</h2>
+                <div class="form-group">
+                    <label for="analyzeFile">Select File:</label>
+                    <input type="file" id="analyzeFile" accept=".txt,.csv,.xlsx,.xls,.json">
+                </div>
+                <div class="form-group">
+                    <label for="analyzeQuery">Question or Analysis Type:</label>
+                    <input type="text" id="analyzeQuery" placeholder="Ask about the file or choose analysis type...">
+                </div>
+                <button onclick="analyzeFile()">
+                    <span>Analyze</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="section">
+                <h2>Compare Files</h2>
+                <div class="file-inputs">
+                    <div>
+                        <label for="file1">First File:</label>
+                        <input type="file" id="file1" accept=".txt,.csv,.xlsx,.xls,.json">
+                    </div>
+                    <div>
+                        <label for="file2">Second File:</label>
+                        <input type="file" id="file2" accept=".txt,.csv,.xlsx,.xls,.json">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="compareQuery">Comparison Type:</label>
+                    <input type="text" id="compareQuery" placeholder="How to compare the files...">
+                </div>
+                <button onclick="compareFiles()">
+                    <span>Compare</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M8 3v3a2 2 0 01-2 2H3m18 0h-3a2 2 0 01-2-2V3m0 18v-3a2 2 0 012-2h3M3 16h3a2 2 0 012 2v3"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="loading" id="loading">Processing...</div>
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        async function readFile() {
+            const fileInput = document.getElementById('file');
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files.length) {
+                resultDiv.textContent = 'Please select a file';
+                return;
+            }
+
+            showLoading();
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload_file', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                resultDiv.textContent = data.content || data.error;
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function analyzeFile() {
+            const fileInput = document.getElementById('analyzeFile');
+            const queryInput = document.getElementById('analyzeQuery');
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files.length) {
+                resultDiv.textContent = 'Please select a file';
+                return;
+            }
+
+            showLoading();
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('query', queryInput.value);
+
+            try {
+                const response = await fetch('/query_uploaded_file', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                resultDiv.textContent = data.response || data.error;
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function compareFiles() {
+            const file1Input = document.getElementById('file1');
+            const file2Input = document.getElementById('file2');
+            const queryInput = document.getElementById('compareQuery');
+            const resultDiv = document.getElementById('result');
+            
+            if (!file1Input.files.length || !file2Input.files.length) {
+                resultDiv.textContent = 'Please select both files';
+                return;
+            }
+
+            showLoading();
+            const file1 = file1Input.files[0];
+            const file2 = file2Input.files[0];
+            const formData = new FormData();
+            formData.append('file1', file1);
+            formData.append('file2', file2);
+            formData.append('query', queryInput.value);
+
+            try {
+                const response = await fetch('/compare_files', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                resultDiv.textContent = data.response || data.error;
+            } catch (error) {
+                resultDiv.textContent = 'Error: ' + error.message;
+            } finally {
+                hideLoading();
+            }
+        }
+    </script>
+</body>
+</html> 
