@@ -3,5 +3,5 @@ requests==2.31.0
 google-generativeai==0.3.2
 openai==1.12.0
 aiohttp==3.9.3
-pandas==1.5.3  # Example:The issue causing the failure is a `ModuleNotFoundError: No module named 'pandas'`. This indicates that You can specify a version or leave it unpinned
-
+pandas==1.5.3
+numpy==1.24.3  # Add this line to ensure compatibility with pandas
