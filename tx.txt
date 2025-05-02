@@ -1,0 +1,26 @@
+(venv) PS D:\ankit77\boat_n8n\boat_n8n> .\venv\Scripts\activate
+(venv) PS D:\ankit77\boat_n8n\boat_n8n> python app.py
+
+SERPAPI_KEY = "85e37aad579f759db20e1a54babd79a33d65bd700c60e871882353a90f9ae508"
+GEMINI_API_KEY = "AIzaSyAPAaL1zlTQLYLqnOQDJqXfPDCVrsymVR0"  
+
+Adding More Files: If you want to load more files from the root directory (e.g., PDFs, JSON, text), you can extend the load_external_data() function. For example:
+python
+
+Copy
+# Load a JSON file
+json_file = "data.json"
+if os.path.exists(json_file):
+    with open(json_file, 'rb') as f:
+        processed_data = process_data_source("json", f)
+        data_store["json_data.json"] = processed_data
+Adding More Website Links: To fetch data from additional websites, add more URLs in load_external_data():
+python
+
+Copy
+additional_url = "https://another-example.com"
+try:
+    processed_data = process_data_source("website", additional_url)
+    data_store["website_" + additional_url] = processed_data
+except Exception as e:
+    print(f"Error fetching additional website data: {str(e)}")
